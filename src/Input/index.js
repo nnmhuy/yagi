@@ -74,7 +74,6 @@ const Input = () => {
   }
 
   const handleScan = (data) => {
-    if (!!student) return
     if (data === null) return
     if (!!!data?.text) return
     const obj = JSON.parse(data?.text)
@@ -144,6 +143,19 @@ const Input = () => {
     gapi.client.setToken(JSON.parse(token))
   }, [])
 
+  useEffect(() => {
+    // get devices
+    (async () => {
+      await navigator.mediaDevices.getUserMedia({ audio: false, video: true });
+      let devices = await navigator.mediaDevices.enumerateDevices();
+      let currentDeviceIndex = devices.length - 1
+      while (devices[currentDeviceIndex].kind !== "videoinput") --currentDeviceIndex
+      setDeviceId(devices[currentDeviceIndex].deviceId)
+    })();
+  }, [])
+
+  const [deviceId, setDeviceId] = useState(null)
+
   const resultValueError = !result || result > 6 || result < 0
 
   return (
@@ -189,20 +201,27 @@ const Input = () => {
         </FormControl>
       </Box>
       <Box>
-        <Box>
-          <Typography variant='body1' sx={{ color: 'blue' }}>Quét mã QR trên phiếu hoa thiêng</Typography>
-          <Box sx={{ margin: 1, border: 'black 1px dashed', p: 2 }}>
-            <QrReader
-              constraints={{ video: { facingMode: { ideal: 'environment' } } }}
-              style={{
-                maxHeight: 320,
-                maxWidth: 320,
-              }}
-              onError={handleScanError}
-              onScan={handleScan}
-            />
+        {!!!student &&
+          <Box>
+            <Typography variant='body1' sx={{ color: 'blue' }}>Quét mã QR trên phiếu hoa thiêng</Typography>
+            <Box sx={{ margin: 1, border: 'black 1px dashed', p: 2 }}>
+              <QrReader
+                constraints={{
+                  audio: false, video: {
+                    deviceId,
+                    facingMode: { ideal: 'environment' }
+                  }
+                }}
+                style={{
+                  maxHeight: 320,
+                  maxWidth: 320,
+                }}
+                onError={handleScanError}
+                onScan={handleScan}
+              />
+            </Box>
           </Box>
-        </Box>
+        }
         <Modal
           open={!!student}
           onClose={resetScan}
