@@ -5,14 +5,19 @@ import {
   RouterProvider,
 } from "react-router-dom";
 import './index.css';
-import App from './App';
 import GenerateQR from './GenerateQR'
+import Input from './Input'
+import Homepage from './Homepage'
 import reportWebVitals from './reportWebVitals';
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <App />,
+    element: <Homepage />,
+  },
+  {
+    path: "/input",
+    element: <Input />,
   },
   {
     path: "/qr",
