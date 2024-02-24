@@ -46,6 +46,7 @@ const Homepage = () => {
       if (resp.error !== undefined) {
         throw (resp);
       }
+      localStorage.setItem("token", JSON.stringify(gapi.client.getToken()))
       window.location = "/input"
     };
 

@@ -1,87 +1,118 @@
 /*global gapi*/
 
-import React, { Component } from 'react';
+import React, { useEffect, useState } from 'react';
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
+import { styled } from '@mui/material/styles';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import FormControl from '@mui/material/FormControl';
+import Select from '@mui/material/Select';
 import QrReader from 'react-qr-scanner'
+import { object, string, number } from 'yup';
+import Snackbar from '@mui/material/Snackbar';
+import IconButton from '@mui/material/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
+import Modal from '@mui/material/Modal';
+import TextField from '@mui/material/TextField';
+import SaveIcon from '@mui/icons-material/Save';
 
 const SPREADSHEET_ID = process.env.REACT_APP_SPREADSHEET_ID
-class App extends Component {
-  constructor() {
-    super()
-    this.handleAuthClick = this.handleAuthClick.bind(this)
-    this.listMajors = this.listMajors.bind(this)
-    this.handleInputChange = this.handleInputChange.bind(this)
-    this.handleClassChange = this.handleClassChange.bind(this)
-    this.handleWeekChange = this.handleWeekChange.bind(this)
-    this.handleScan = this.handleScan.bind(this)
-    this.resetScan = this.resetScan.bind(this)
-    this.state = {
-      input: "",
-      class: "Ấu nhi 01",
-      week: "2",
-      scanResult: null
-    }
+
+let studentDataSchema = object({
+  name: string().required(),
+  id: number().required().positive().integer(),
+  class: string().required()
+});
+
+const Container = styled(Box)({
+  width: "100vw",
+  height: "100vh",
+})
+
+const Background = styled(Box)({
+  position: "fixed",
+  zIndex: -1,
+  width: "100vw",
+  height: "100vh",
+  backgroundImage: `url("https://scontent.fhan3-5.fna.fbcdn.net/v/t39.30808-6/359835501_294613576291168_233522295257806940_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=efb6e6&_nc_eui2=AeE1DkBdw1_3rDW2tYI9J1luzsBErn-cABTOwESuf5wAFJ4Edw_429MErl05851zmdp2AdWR0qmAZTOr6kGLQ052&_nc_ohc=urjRrVnb-bIAX9d9YAS&_nc_oc=AQnIXT7ghOXyw5t0T_JtyqbFkZjdDPCVxAYsh5pC4m6jHM_g3Dy8GukcXnoNBWZCmXE&_nc_ht=scontent.fhan3-5.fna&oh=00_AfBAJ7TjHiXgyLKmFTpLmFfmU5BkG3LAGpG9jDzKG_qF2A&oe=65DF1F6F")`,
+  backgroundSize: "contain",
+  backgroundRepeat: "no-repeat",
+  backgroundPosition: "center",
+  opacity: 0.2
+})
+
+
+
+const Input = () => {
+  const [snackbarMsg, setSnackbarMsg] = useState("");
+
+  const handleOpenSnackbar = (msg) => {
+    setSnackbarMsg(msg)
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbarMsg("");
+  };
+
+
+  const [week, setWeek] = useState(() => {
+    let date = new Date()
+    date.setDate(date.getDate() - 1) //yesterday
+    const firstSunday = new Date(2024, 1, 25); // the month is 0-indexed
+
+    const oneDay = 24 * 60 * 60 * 1000; // hours*minutes*seconds*milliseconds
+    const diffDays = Math.round((date - firstSunday) / oneDay);
+    return Math.floor(Math.max(0, diffDays) / 7)
+  })
+
+  const [student, setStudent] = useState(null)
+  const [result, setResult] = useState("")
+
+  const handleWeekChange = (event) => {
+    setWeek(event.target.value)
   }
 
-  handleAuthClick() {
-    window.tokenClient.callback = async (resp) => {
-      if (resp.error !== undefined) {
-        throw (resp);
-      }
-    };
-
-    if (gapi.client.getToken() === null) {
-      // Prompt the user to select a Google Account and ask for consent to share their data
-      // when establishing a new session.
-      window.tokenClient.requestAccessToken({ prompt: 'consent' });
-    } else {
-      // Skip display of account chooser and consent dialog for an existing session.
-      window.tokenClient.requestAccessToken({ prompt: '' });
-    }
-  }
-
-  async listMajors() {
-    let response;
+  const handleScan = (data) => {
+    if (data === null) return
+    if (!!!data?.text) return
+    const obj = JSON.parse(data?.text)
     try {
-      // Fetch first 10 files
-      response = await gapi.client.sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: 'Chiên con 01!A1:E4',
-      });
-    } catch (err) {
-      document.getElementById('content').innerText = err.message;
-      return;
+      studentDataSchema.validateSync(obj)
+    } catch (error) {
+      handleOpenSnackbar("Mã QR không hợp lệ")
+      return
     }
-    const range = response.result;
-    console.log(range)
-    if (!range || !range.values || range.values.length === 0) {
-      document.getElementById('content').innerText = 'No values found.';
-      return;
-    }
-    // Flatten to string to display
-    const output = range.values.reduce(
-      (str, row) => `${str}${row[0]}, ${row[1]}, ${row[2]}, ${row[3]}, ${row[4]}\n`,
-      '');
-    document.getElementById('content').innerText = output;
+
+    setStudent(obj)
+  }
+
+  const handleScanError = (err) => {
+    console.error(err)
+  }
+
+  const resetScan = () => {
+    setStudent(null)
+    setResult("")
   }
 
 
-  updateValues(_values, callback) {
+  const submitStudentResult = async (callback) => {
+    if (!student) return
     let values = [
       [
-        // Cell values ...
+        Number(result)
       ],
-      // Additional rows ...
     ];
-    values = _values;
     const body = {
       values: values,
     };
-    const sheet = this.state.class
-    const row = Number(this.state.scanResult) + 1
-    const column = String.fromCharCode(69 + Number(this.state.week) - 2)
+    const sheet = student.class
+    const row = Number(student.id) + 1
+    const column = String.fromCharCode(69 + Number(week))
     const range = `${sheet}!${column}${row}`
     try {
-      gapi.client.sheets.spreadsheets.values.update({
+      await gapi.client.sheets.spreadsheets.values.update({
         spreadsheetId: SPREADSHEET_ID,
         // range: "Chiên con 01!E2",
         range,
@@ -90,91 +121,150 @@ class App extends Component {
       }).then((response) => {
         const result = response.result;
         console.log(`${result.updatedCells} cells updated.`);
+        setSnackbarMsg("Cập nhật thành công")
         if (callback) callback(response);
       });
     } catch (err) {
-      document.getElementById('content').innerText = err.message;
+      console.log(err)
+      setSnackbarMsg("Hết phiên. Vui lòng đăng nhập lại.")
+      localStorage.removeItem("token")
+      window.location = "/"
       return;
     }
   }
 
-  handleInputChange(e) {
-    this.setState({
-      input: e.target.value
-    })
-  }
+  useEffect(() => {
+    const token = localStorage.getItem("token")
+    if (!token) {
+      setSnackbarMsg("Chưa đăng nhập")
+      window.location = "/"
+    }
+    while (!gapi?.client) { }
+    gapi.client.setToken(JSON.parse(token))
+  }, [])
 
-  handleClassChange(e) {
-    this.setState({
-      class: e.target.value
-    })
-  }
+  const resultValueError = !result || result > 6 || result < 0
 
-  handleWeekChange(e) {
-    this.setState({
-      week: e.target.value
-    })
-  }
-
-  handleScan(data) {
-    this.setState({
-      scanResult: data?.text
-    })
-  }
-  handleError(err) {
-    console.error(err)
-  }
-
-  resetScan() {
-    this.setState({
-      scanResult: null
-    })
-  }
-
-
-  render() {
-    return (
-      <div className="App">
-        <button onClick={this.handleAuthClick}>Đăng nhập</button>
-        <button onClick={this.listMajors}>Get data</button>
-        <div>
-          <label for="class">Lớp:</label>
-
-          <select name="class" id="class" onChange={this.handleClassChange}>
-            <option value="Ấu nhi 01">Ấu nhi 01</option>
-            <option value="Ấu nhi 02">Ấu nhi 02</option>
-            <option value="Ấu nhi 03">Ấu nhi 03</option>
-          </select>
-        </div>
-        <div>
-          <label for="week">Tuần:</label>
-
-          <select name="week" id="week" onChange={this.handleWeekChange}>
-            <option value="2">Tuần 2</option>
-            <option value="3">Tuần 3</option>
-            <option value="4">Tuần 4</option>
-          </select>
-        </div>
-        <pre id="content"></pre>
-        {!!!this.state.scanResult ?
-          <QrReader
-            facingMode={"user"}
-            style={{
-              height: 240,
-              width: 320,
-            }}
-            onError={this.handleError}
-            onScan={this.handleScan}
-          />
-          : <div>
-            <label for="value" id="value">Tổng hoa thiêng:</label>
-            <input name="value" type="number" onChange={this.handleInputChange} />
-            <button onClick={() => this.updateValues([[Number(this.state.input)]], this.resetScan)} >Update</button>
-          </div>
+  return (
+    <Container sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', flexDirection: "column" }}>
+      <Snackbar
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        open={!!snackbarMsg}
+        autoHideDuration={2000}
+        onClose={handleCloseSnackbar}
+        message={snackbarMsg}
+        action={<IconButton
+          size="small"
+          aria-label="close"
+          color="inherit"
+          onClick={handleCloseSnackbar}
+        >
+          <CloseIcon fontSize="small" />
+        </IconButton>}
+      />
+      <Background />
+      <Typography variant="h6" sx={{ color: "brown", marginTop: 5 }}>
+        Chiến dịch Mùa Chay 2024
+      </Typography>
+      <Typography variant="h5" sx={{ m: 1, color: "purple" }}>
+        HOÁN ĐỔI VÀ CANH TÂN
+      </Typography>
+      <Box>
+        <FormControl sx={{ m: 1, minWidth: 300 }}>
+          <InputLabel id="week-select-label">Tuần</InputLabel>
+          <Select
+            labelId="week-select-label"
+            id="week-select"
+            value={week}
+            label="Tuần"
+            onChange={handleWeekChange}
+          >
+            <MenuItem value={0}>Tuần 02 (CN, 25/02)</MenuItem>
+            <MenuItem value={1}>Tuần 03 (CN, 03/03)</MenuItem>
+            <MenuItem value={2}>Tuần 04 (CN, 10/03)</MenuItem>
+            <MenuItem value={3}>Tuần 05 (CN, 17/3)</MenuItem>
+            <MenuItem value={4}>Tuần 06 (CN, 21/03)</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
+      <Box>
+        {!!!student &&
+          <Box>
+            <Typography variant='body1' sx={{ color: 'blue' }}>Quét mã QR trên phiếu hoa thiêng</Typography>
+            <Box sx={{ margin: 1, border: 'black 1px dashed', p: 2 }}>
+              <QrReader
+                constraints={{ video: true, facingMode: 'environment' }}
+                style={{
+                  height: 240,
+                  width: 320,
+                }}
+                onError={handleScanError}
+                onScan={handleScan}
+              />
+            </Box>
+          </Box>
         }
-      </div>
-    );
-  }
+        <Modal
+          open={!!student}
+          onClose={resetScan}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+        >
+          <Box sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 350,
+            bgcolor: 'background.paper',
+            border: '2px solid #000',
+            boxShadow: 24,
+            p: 1,
+          }}>
+            <Typography id="modal-modal-title" variant="h6" component="h2">
+              {student?.name}
+            </Typography>
+            <Typography id="modal-modal-description" sx={{ mt: 2 }}>
+              Lớp: {student?.class} <br />
+              STT: {student?.id} <br />
+            </Typography>
+            <Box
+              component="form"
+              noValidate
+              autoComplete="off"
+              onSubmit={() => {
+                if (!resultValueError) submitStudentResult(resetScan)
+              }}
+              sx={{ display: 'flex' }}
+            >
+              <TextField
+                error={resultValueError}
+                id="outlined-basic"
+                label="Nhập hoa thiêng tuần"
+                fullWidth
+                autoFocus
+                variant="outlined"
+                value={result}
+                type="number"
+                onChange={(e) => setResult(e.target.value)}
+                sx={{ mt: 2 }}
+                helperText={resultValueError && "Giá trị không hợp lệ"}
+              />
+              <IconButton
+                aria-label="toggle password visibility"
+                onClick={() => submitStudentResult(resetScan)}
+                size='large'
+                color='primary'
+                disabled={resultValueError}
+              >
+                <SaveIcon fontSize='inherit' />
+              </IconButton>
+            </Box>
+          </Box>
+        </Modal>
+      </Box>
+    </Container>
+  )
 }
 
-export default App;
+export default Input

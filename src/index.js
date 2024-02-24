@@ -7,6 +7,7 @@ import {
 import './index.css';
 import GenerateQR from './GenerateQR'
 import Input from './Input'
+import OldInput from './OldInput'
 import Homepage from './Homepage'
 import reportWebVitals from './reportWebVitals';
 
@@ -18,6 +19,10 @@ const router = createBrowserRouter([
   {
     path: "/input",
     element: <Input />,
+  },
+  {
+    path: "/abc",
+    element: <OldInput />,
   },
   {
     path: "/qr",
