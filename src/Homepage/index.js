@@ -1,6 +1,6 @@
 /*global gapi*/
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
@@ -59,6 +59,17 @@ const Homepage = () => {
       window.tokenClient.requestAccessToken({ prompt: '' });
     }
   }
+
+  useEffect(() => {
+    // get devices
+    (async () => {
+      await navigator.mediaDevices.getUserMedia({ audio: false, video: true });
+      let devices = await navigator.mediaDevices.enumerateDevices();
+      let currentDeviceIndex = devices.length - 1
+      while (devices[currentDeviceIndex].kind !== "videoinput") --currentDeviceIndex
+      localStorage.setItem("deviceId", devices[currentDeviceIndex].deviceId)
+    })();
+  }, [])
 
   return (
     <Container sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', flexDirection: "column" }}>

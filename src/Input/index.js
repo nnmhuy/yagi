@@ -144,17 +144,10 @@ const Input = () => {
   }, [])
 
   useEffect(() => {
-    // get devices
-    (async () => {
-      await navigator.mediaDevices.getUserMedia({ audio: false, video: true });
-      let devices = await navigator.mediaDevices.enumerateDevices();
-      let currentDeviceIndex = devices.length - 1
-      while (devices[currentDeviceIndex].kind !== "videoinput") --currentDeviceIndex
-      setDeviceId(devices[currentDeviceIndex].deviceId)
-    })();
+    setDeviceId(localStorage.getItem("deviceId"))
   }, [])
 
-  const [deviceId, setDeviceId] = useState(null)
+  const [deviceId, setDeviceId] = useState("")
 
   const resultValueError = !result || result > 6 || result < 0
 
