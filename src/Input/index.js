@@ -198,7 +198,7 @@ const Input = () => {
           <Box>
             <Typography variant='body1' sx={{ color: 'blue' }}>Quét mã QR trên phiếu hoa thiêng</Typography>
             <Box sx={{ margin: 1, border: 'black 1px dashed', p: 2 }}>
-              <QrReader
+              {!!deviceId && <QrReader
                 constraints={{
                   audio: false, video: {
                     deviceId,
@@ -211,7 +211,7 @@ const Input = () => {
                 }}
                 onError={handleScanError}
                 onScan={handleScan}
-              />
+              />}
             </Box>
           </Box>
         }
