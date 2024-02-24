@@ -74,6 +74,7 @@ const Input = () => {
   }
 
   const handleScan = (data) => {
+    if (!!student) return
     if (data === null) return
     if (!!!data?.text) return
     const obj = JSON.parse(data?.text)
@@ -188,22 +189,20 @@ const Input = () => {
         </FormControl>
       </Box>
       <Box>
-        {!!!student &&
-          <Box>
-            <Typography variant='body1' sx={{ color: 'blue' }}>Quét mã QR trên phiếu hoa thiêng</Typography>
-            <Box sx={{ margin: 1, border: 'black 1px dashed', p: 2 }}>
-              <QrReader
-                constraints={{ video: true, facingMode: 'environment' }}
-                style={{
-                  height: 240,
-                  width: 320,
-                }}
-                onError={handleScanError}
-                onScan={handleScan}
-              />
-            </Box>
+        <Box>
+          <Typography variant='body1' sx={{ color: 'blue' }}>Quét mã QR trên phiếu hoa thiêng</Typography>
+          <Box sx={{ margin: 1, border: 'black 1px dashed', p: 2 }}>
+            <QrReader
+              constraints={{ video: { facingMode: { ideal: 'environment' } } }}
+              style={{
+                maxHeight: 320,
+                maxWidth: 320,
+              }}
+              onError={handleScanError}
+              onScan={handleScan}
+            />
           </Box>
-        }
+        </Box>
         <Modal
           open={!!student}
           onClose={resetScan}
