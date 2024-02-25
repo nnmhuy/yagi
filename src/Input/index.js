@@ -134,21 +134,16 @@ const Input = () => {
   }
 
   useEffect(() => {
+    if (!gapi || !gapi.client) return
     const token = localStorage.getItem("token")
     if (!token) {
       setSnackbarMsg("Chưa đăng nhập")
       window.location = "/"
     }
-    while (!gapi || !gapi?.client) { }
     gapi.client.setToken(JSON.parse(token))
-  }, [])
+  }, [gapi])
 
   useEffect(() => {
-    localStorage.getItem("deviceId")
-  }, [])
-
-  useEffect(() => {
-    while (!localStorage.getItem("deviceId")) { }
     setDeviceId(localStorage.getItem("deviceId"))
   }, [])
 
