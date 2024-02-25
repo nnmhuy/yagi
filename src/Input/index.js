@@ -75,6 +75,7 @@ const Input = () => {
   }
 
   const handleScan = (data) => {
+    if (student !== null) return
     if (data === null) return
     if (!!!data?.text) return
     const obj = JSON.parse(data?.text)
