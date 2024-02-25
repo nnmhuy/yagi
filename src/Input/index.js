@@ -16,6 +16,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import Modal from '@mui/material/Modal';
 import TextField from '@mui/material/TextField';
 import SaveIcon from '@mui/icons-material/Save';
+import { loadDeviceId } from '../utils/camera'
 
 const SPREADSHEET_ID = process.env.REACT_APP_SPREADSHEET_ID
 
@@ -144,7 +145,14 @@ const Input = () => {
   }, [gapi])
 
   useEffect(() => {
-    setDeviceId(localStorage.getItem("deviceId"))
+    if (!localStorage.getItem("deviceId")) {
+      loadDeviceId().then(() => {
+        setDeviceId(localStorage.getItem("deviceId"))
+      }
+      )
+    } else {
+      setDeviceId(localStorage.getItem("deviceId"))
+    }
   }, [])
 
   const [deviceId, setDeviceId] = useState("")

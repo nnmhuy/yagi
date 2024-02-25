@@ -6,6 +6,7 @@ import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import GoogleIcon from '@mui/icons-material/Google';
 import { styled } from '@mui/material/styles';
+import { loadDeviceId } from '../utils/camera';
 
 const LoginButton = (props) => {
   return (
@@ -62,13 +63,7 @@ const Homepage = () => {
 
   useEffect(() => {
     // get devices
-    (async () => {
-      await navigator.mediaDevices.getUserMedia({ video: true });
-      let devices = await navigator.mediaDevices.enumerateDevices();
-      let currentDeviceIndex = devices.length - 1
-      while (devices[currentDeviceIndex].kind !== "videoinput") --currentDeviceIndex
-      localStorage.setItem("deviceId", devices[currentDeviceIndex].deviceId)
-    })();
+    loadDeviceId()
   }, [])
 
   return (
