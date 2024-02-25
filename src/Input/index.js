@@ -139,7 +139,7 @@ const Input = () => {
       setSnackbarMsg("Chưa đăng nhập")
       window.location = "/"
     }
-    while (!gapi?.client) { }
+    while (!gapi || !gapi?.client) { }
     gapi.client.setToken(JSON.parse(token))
   }, [])
 
