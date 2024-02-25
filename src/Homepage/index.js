@@ -63,7 +63,10 @@ const Homepage = () => {
 
   useEffect(() => {
     // get devices
-    loadDeviceId()
+    (async () => {
+      // await navigator.mediaDevices.getUserMedia({ video: true });
+      await loadDeviceId()
+    })()
   }, [])
 
   return (
