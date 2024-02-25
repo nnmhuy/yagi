@@ -144,6 +144,11 @@ const Input = () => {
   }, [])
 
   useEffect(() => {
+    localStorage.getItem("deviceId")
+  }, [])
+
+  useEffect(() => {
+    while (!localStorage.getItem("deviceId")) { }
     setDeviceId(localStorage.getItem("deviceId"))
   }, [])
 
