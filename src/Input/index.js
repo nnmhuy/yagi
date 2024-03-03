@@ -136,24 +136,22 @@ const Input = () => {
   }
 
   useEffect(() => {
-    if (!gapi || !gapi.client) return
     const token = localStorage.getItem("token")
     if (!token) {
       setSnackbarMsg("Chưa đăng nhập")
       window.location = "/"
     }
+    while (!gapi || !gapi?.client) { }
     gapi.client.setToken(JSON.parse(token))
-  }, [gapi])
+  }, [])
 
   useEffect(() => {
-    if (!localStorage.getItem("deviceId")) {
-      loadDeviceId().then(() => {
-        setDeviceId(localStorage.getItem("deviceId"))
-      }
-      )
-    } else {
-      setDeviceId(localStorage.getItem("deviceId"))
-    }
+    localStorage.getItem("deviceId")
+  }, [])
+
+  useEffect(() => {
+    while (!localStorage.getItem("deviceId")) { }
+    setDeviceId(localStorage.getItem("deviceId"))
   }, [])
 
   const [deviceId, setDeviceId] = useState("")
