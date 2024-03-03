@@ -64,12 +64,9 @@ const Homepage = () => {
   useEffect(() => {
     // get devices
     (async () => {
-      await navigator.mediaDevices.getUserMedia({ audio: false, video: true });
-      let devices = await navigator.mediaDevices.enumerateDevices();
-      let currentDeviceIndex = devices.length - 1
-      while (devices[currentDeviceIndex].kind !== "videoinput") --currentDeviceIndex
-      localStorage.setItem("deviceId", devices[currentDeviceIndex].deviceId)
-    })();
+      await navigator.mediaDevices.getUserMedia({ video: true });
+      await loadDeviceId()
+    })()
   }, [])
 
   return (
