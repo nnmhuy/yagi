@@ -16,9 +16,19 @@ import CloseIcon from '@mui/icons-material/Close';
 import Modal from '@mui/material/Modal';
 import TextField from '@mui/material/TextField';
 import SaveIcon from '@mui/icons-material/Save';
-import { loadDeviceId } from '../utils/camera'
+import StudentLog from './StudentLog'
 
 const SPREADSHEET_ID = process.env.REACT_APP_SPREADSHEET_ID
+
+const WEEKS = [
+  { value: 0, name: "Tuần 02 (CN, 25/02)" },
+  { value: 1, name: "Tuần 03 (CN, 03/03)" },
+  { value: 2, name: "Tuần 04 (CN, 10/03)" },
+  { value: 3, name: "Tuần 05 (CN, 17/03)" },
+  { value: 4, name: "Tuần 06 (CN, 21/03)" },
+  { value: 5, name: "Tổng hoa thiêng" },
+]
+
 
 let studentDataSchema = object({
   name: string().required(),
@@ -43,6 +53,9 @@ const Background = styled(Box)({
   opacity: 0.2
 })
 
+function createData(week, value) {
+  return { week, value };
+}
 
 
 const Input = () => {
@@ -68,10 +81,39 @@ const Input = () => {
   })
 
   const [student, setStudent] = useState(null)
+  const [studentData, setStudentData] = useState([])
   const [result, setResult] = useState("")
 
   const handleWeekChange = (event) => {
     setWeek(event.target.value)
+  }
+
+  const getStudentData = async (studentClass, id) => {
+    const sheet = studentClass
+    const row = Number(id) + 1
+    const range = `${sheet}!E${row}:J${row}`
+
+    try {
+      if (!gapi || !gapi.client || !gapi.client.sheets) return
+      const data = await gapi.client.sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: range,
+      }).then((response) => {
+        const result = response.result;
+        return result.values[0]
+      });
+      let studentData = []
+      data.forEach((d, index) => {
+        studentData.push(createData(WEEKS[index].name, d))
+      })
+      setStudentData(studentData)
+    } catch (err) {
+      console.log(err)
+      // setSnackbarMsg("Hết phiên. Vui lòng đăng nhập lại.")
+      // localStorage.removeItem("token")
+      // window.location = "/"
+      return;
+    }
   }
 
   const handleScan = (data) => {
@@ -81,6 +123,7 @@ const Input = () => {
     const obj = JSON.parse(data?.text)
     try {
       studentDataSchema.validateSync(obj)
+      getStudentData(obj.class, obj.id)
     } catch (error) {
       handleOpenSnackbar("Mã QR không hợp lệ")
       return
@@ -141,18 +184,15 @@ const Input = () => {
       setSnackbarMsg("Chưa đăng nhập")
       window.location = "/"
     }
-    while (!gapi || !gapi?.client) { }
-    gapi.client.setToken(JSON.parse(token))
-  }, [])
+    if (gapi && gapi?.client)
+      gapi.client.setToken(JSON.parse(token))
+  }, [gapi])
 
   useEffect(() => {
-    localStorage.getItem("deviceId")
+    const storedDeviceId = localStorage.getItem("deviceId")
+    if (storedDeviceId) setDeviceId(storedDeviceId)
   }, [])
 
-  useEffect(() => {
-    while (!localStorage.getItem("deviceId")) { }
-    setDeviceId(localStorage.getItem("deviceId"))
-  }, [])
 
   const [deviceId, setDeviceId] = useState("")
 
@@ -195,7 +235,7 @@ const Input = () => {
             <MenuItem value={0}>Tuần 02 (CN, 25/02)</MenuItem>
             <MenuItem value={1}>Tuần 03 (CN, 03/03)</MenuItem>
             <MenuItem value={2}>Tuần 04 (CN, 10/03)</MenuItem>
-            <MenuItem value={3}>Tuần 05 (CN, 17/3)</MenuItem>
+            <MenuItem value={3}>Tuần 05 (CN, 17/03)</MenuItem>
             <MenuItem value={4}>Tuần 06 (CN, 21/03)</MenuItem>
           </Select>
         </FormControl>
@@ -277,6 +317,9 @@ const Input = () => {
               >
                 <SaveIcon fontSize='inherit' />
               </IconButton>
+            </Box>
+            <Box>
+              <StudentLog studentData={studentData} />
             </Box>
           </Box>
         </Modal>
