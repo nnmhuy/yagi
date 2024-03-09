@@ -324,6 +324,12 @@ const Input = () => {
           </Box>
         </Modal>
       </Box>
+      <Box sx={{ boxSizing: "border-box", width: "100%", padding: "10px", minHeight: "700px", textAlign: "center" }}>
+        <Typography variant="h6" sx={{ color: "brown" }}>
+          Tổng hợp kết quả hoa thiêng các lớp
+        </Typography>
+        <iframe style={{ width: `100%`, height: "100%" }} src="https://docs.google.com/spreadsheets/d/1INz4zcQHHMUi7sULzq6678cmPHu_06CcoDEnydZnqPk" title="Google sheets"></iframe>
+      </Box>
     </Container>
   )
 }
