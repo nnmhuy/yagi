@@ -241,25 +241,27 @@ const Input = () => {
         </FormControl>
       </Box>
       <Box>
-        <Box>
-          <Typography variant='body1' sx={{ color: 'blue' }}>Quét mã QR trên phiếu hoa thiêng</Typography>
-          <Box sx={{ margin: 1, border: 'black 1px dashed', p: 2 }}>
-            {!!deviceId && <QrReader
-              constraints={{
-                audio: false, video: {
-                  deviceId,
-                  facingMode: { ideal: 'environment' }
-                }
-              }}
-              style={{
-                maxHeight: 320,
-                maxWidth: 320,
-              }}
-              onError={handleScanError}
-              onScan={handleScan}
-            />}
+        {!!!student &&
+          <Box>
+            <Typography variant='body1' sx={{ color: 'blue' }}>Quét mã QR trên phiếu hoa thiêng</Typography>
+            <Box sx={{ margin: 1, border: 'black 1px dashed', p: 2 }}>
+              {!!deviceId && <QrReader
+                constraints={{
+                  audio: false, video: {
+                    deviceId,
+                    facingMode: { ideal: 'environment' }
+                  }
+                }}
+                style={{
+                  maxHeight: 320,
+                  maxWidth: 320,
+                }}
+                onError={handleScanError}
+                onScan={handleScan}
+              />}
+            </Box>
           </Box>
-        </Box>
+        }
         <Modal
           open={!!student}
           onClose={resetScan}
