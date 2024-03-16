@@ -8,7 +8,6 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
-import QrReader from 'react-qr-scanner'
 import { object, string, number } from 'yup';
 import Snackbar from '@mui/material/Snackbar';
 import IconButton from '@mui/material/IconButton';
@@ -17,6 +16,7 @@ import Modal from '@mui/material/Modal';
 import TextField from '@mui/material/TextField';
 import SaveIcon from '@mui/icons-material/Save';
 import StudentLog from './StudentLog'
+import { QrReader } from 'react-qr-reader';
 
 const SPREADSHEET_ID = process.env.REACT_APP_SPREADSHEET_ID
 
@@ -116,7 +116,27 @@ const Input = () => {
     }
   }
 
-  const handleScan = (data) => {
+  // const handleScan = (data) => {
+  //   if (student !== null) return
+  //   if (data === null) return
+  //   if (!!!data?.text) return
+  //   const obj = JSON.parse(data?.text)
+  //   try {
+  //     studentDataSchema.validateSync(obj)
+  //     getStudentData(obj.class, obj.id)
+  //   } catch (error) {
+  //     handleOpenSnackbar("Mã QR không hợp lệ")
+  //     return
+  //   }
+
+  //   setStudent(obj)
+  // }
+
+  // const handleScanError = (err) => {
+  //   console.error(err)
+  // }
+
+  const handleScanResult = (data, error) => {
     if (student !== null) return
     if (data === null) return
     if (!!!data?.text) return
@@ -130,11 +150,12 @@ const Input = () => {
     }
 
     setStudent(obj)
+
+    if (!!error) {
+      console.info(error);
+    }
   }
 
-  const handleScanError = (err) => {
-    console.error(err)
-  }
 
   const resetScan = () => {
     setStudent(null)
@@ -245,7 +266,7 @@ const Input = () => {
           <Box>
             <Typography variant='body1' sx={{ color: 'blue' }}>Quét mã QR trên phiếu hoa thiêng</Typography>
             <Box sx={{ margin: 1, border: 'black 1px dashed', p: 2 }}>
-              {!!deviceId && <QrReader
+              {/* {!!deviceId && <QrReader
                 constraints={{
                   audio: false, video: {
                     deviceId,
@@ -258,6 +279,20 @@ const Input = () => {
                 }}
                 onError={handleScanError}
                 onScan={handleScan}
+              />} */}
+              {!!deviceId && <QrReader
+                onResult={handleScanResult}
+                constraints={{
+                  audio: false, video: {
+                    deviceId,
+                    facingMode: { ideal: 'environment' }
+                  }
+                }}
+                containerStyle={{
+                  maxHeight: 320,
+                  maxWidth: 320,
+                }}
+                scanDelay={100}
               />}
             </Box>
           </Box>
