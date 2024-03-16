@@ -283,10 +283,8 @@ const Input = () => {
               {!!deviceId && <QrReader
                 onResult={handleScanResult}
                 constraints={{
-                  audio: false, video: {
-                    deviceId,
-                    facingMode: { ideal: 'environment' }
-                  }
+                  deviceId,
+                  facingMode: { ideal: 'environment' }
                 }}
                 containerStyle={{
                   maxHeight: 320,
