@@ -269,7 +269,6 @@ const Input = () => {
               {/* {!!deviceId && <QrReader
                 constraints={{
                   audio: false, video: {
-                    deviceId,
                     facingMode: { ideal: 'environment' }
                   }
                 }}
