@@ -5,6 +5,8 @@ const loadDeviceId = async () => {
   // }
   let currentDeviceIndex = devices.length - 1
   while (devices[currentDeviceIndex].kind !== "videoinput") --currentDeviceIndex
+  let videoInputDevices = devices.filter(device => device.kind === "videoinput")
+  localStorage.setItem("devices", JSON.stringify(videoInputDevices))
   localStorage.setItem("deviceId", devices[currentDeviceIndex].deviceId)
 }
 

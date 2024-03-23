@@ -17,6 +17,8 @@ import TextField from '@mui/material/TextField';
 import SaveIcon from '@mui/icons-material/Save';
 import StudentLog from './StudentLog'
 import { QrReader } from 'react-qr-reader';
+import { Button } from '@mui/material';
+import CameraAltIcon from '@mui/icons-material/CameraAlt';
 
 const SPREADSHEET_ID = process.env.REACT_APP_SPREADSHEET_ID
 
@@ -116,26 +118,6 @@ const Input = () => {
     }
   }
 
-  // const handleScan = (data) => {
-  //   if (student !== null) return
-  //   if (data === null) return
-  //   if (!!!data?.text) return
-  //   const obj = JSON.parse(data?.text)
-  //   try {
-  //     studentDataSchema.validateSync(obj)
-  //     getStudentData(obj.class, obj.id)
-  //   } catch (error) {
-  //     handleOpenSnackbar("Mã QR không hợp lệ")
-  //     return
-  //   }
-
-  //   setStudent(obj)
-  // }
-
-  // const handleScanError = (err) => {
-  //   console.error(err)
-  // }
-
   const handleScanResult = (data, error) => {
     if (student !== null) return
     if (data === null) return
@@ -212,10 +194,17 @@ const Input = () => {
   useEffect(() => {
     const storedDeviceId = localStorage.getItem("deviceId")
     if (storedDeviceId) setDeviceId(storedDeviceId)
+    const devices = localStorage.getItem("devices")
+    try {
+      setDevices(devices ? JSON.parse(devices) : [])
+    } catch (error) {
+      localStorage.setItem("devices", JSON.stringify([]))
+    }
   }, [])
 
 
   const [deviceId, setDeviceId] = useState("")
+  const [devices, setDevices] = useState([])
 
   const resultValueError = !result || result > 6 || result < 0
 
@@ -265,32 +254,33 @@ const Input = () => {
         {!!!student &&
           <Box>
             <Typography variant='body1' sx={{ color: 'blue' }}>Quét mã QR trên phiếu hoa thiêng</Typography>
-            <Box sx={{ margin: 1, border: 'black 1px dashed', p: 2 }}>
-              {/* {!!deviceId && <QrReader
-                constraints={{
-                  audio: false, video: {
+            <Box>
+              <Box sx={{ margin: 1, border: 'black 1px dashed', p: 2 }}>
+                {!!deviceId && <QrReader
+                  onResult={handleScanResult}
+                  constraints={{
+                    deviceId,
                     facingMode: { ideal: 'environment' }
-                  }
-                }}
-                style={{
-                  maxHeight: 320,
-                  maxWidth: 320,
-                }}
-                onError={handleScanError}
-                onScan={handleScan}
-              />} */}
-              {!!deviceId && <QrReader
-                onResult={handleScanResult}
-                constraints={{
-                  deviceId,
-                  facingMode: { ideal: 'environment' }
-                }}
-                containerStyle={{
-                  maxHeight: 320,
-                  maxWidth: 320,
-                }}
-                scanDelay={100}
-              />}
+                  }}
+                  containerStyle={{
+                    maxHeight: 320,
+                    maxWidth: 320,
+                  }}
+                  scanDelay={100}
+                />}
+              </Box>
+              <Box>
+                {devices.map((device, index) => {
+                  return <Button
+                    variant={deviceId === device.deviceId ? "contained" : "outlined"}
+                    disabled={deviceId === device.deviceId} key={device.deviceId}
+                    onClick={() => setDeviceId(device.deviceId)}
+                    size='small'
+                  >
+                    <CameraAltIcon fontSize='small' /> {index + 1}
+                  </Button>
+                })}
+              </Box>
             </Box>
           </Box>
         }
