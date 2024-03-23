@@ -1,6 +1,6 @@
 /*global gapi*/
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import { styled } from '@mui/material/styles';
@@ -208,6 +208,24 @@ const Input = () => {
 
   const resultValueError = !result || result > 6 || result < 0
 
+  const QRScanner = ({ deviceId }) => {
+    if (!deviceId) return <></>
+    return (
+
+      <QrReader
+        onResult={handleScanResult}
+        constraints={{
+          deviceId,
+          facingMode: { ideal: 'environment' }
+        }}
+        containerStyle={{
+          maxHeight: 320,
+          maxWidth: 320,
+        }}
+        scanDelay={100}
+      />)
+  }
+
   return (
     <Container sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', flexDirection: "column" }}>
       <Snackbar
@@ -256,7 +274,7 @@ const Input = () => {
             <Typography variant='body1' sx={{ color: 'blue' }}>Quét mã QR trên phiếu hoa thiêng</Typography>
             <Box>
               <Box sx={{ margin: 1, border: 'black 1px dashed', p: 2 }}>
-                {!!deviceId && <QrReader
+                {/* {!!deviceId && <QrReader
                   onResult={handleScanResult}
                   constraints={{
                     deviceId,
@@ -267,18 +285,24 @@ const Input = () => {
                     maxWidth: 320,
                   }}
                   scanDelay={100}
-                />}
+                />} */}
+                <QRScanner deviceId={deviceId} />
               </Box>
               <Box>
-                {devices.map((device, index) => {
-                  return <Button
-                    variant={deviceId === device.deviceId ? "contained" : "outlined"}
-                    disabled={deviceId === device.deviceId} key={device.deviceId}
-                    onClick={() => setDeviceId(device.deviceId)}
-                    size='small'
-                  >
-                    <CameraAltIcon fontSize='small' /> {index + 1}
-                  </Button>
+                {devices.map((device) => {
+                  return <Box key={device.deviceId}>
+                    <Button
+                      variant={deviceId === device.deviceId ? "contained" : "outlined"}
+                      disabled={deviceId === device.deviceId} key={device.deviceId}
+                      onClick={() => setDeviceId(device.deviceId)}
+                      size='small'
+                      fullWidth
+                      sx={{ mb: 1 }}
+                    >
+                      <CameraAltIcon fontSize='small' />
+                      {device.kind}{device.label}
+                    </Button>
+                  </Box>
                 })}
               </Box>
             </Box>
