@@ -1,85 +1,184 @@
-/*global gapi*/
-
-import React, { useEffect } from 'react';
-import Button from '@mui/material/Button';
+import React, { useEffect, useState } from 'react';
 import Box from '@mui/material/Box'
-import Typography from '@mui/material/Typography'
-import GoogleIcon from '@mui/icons-material/Google';
 import { styled } from '@mui/material/styles';
-import { loadDeviceId } from '../utils/camera';
+import { DataGrid, GridToolbar } from '@mui/x-data-grid';
+import Paper from '@mui/material/Paper';
+import Layout from '../components/Layout';
+import moment from 'moment'
+import { backendURL } from '../constants/constants'
+import { useSearchParams } from "react-router-dom";
 
-const LoginButton = (props) => {
-  return (
-    <Button
-      component="label"
-      role={undefined}
-      variant="contained"
-      size='large'
-      tabIndex={-1}
-      startIcon={<GoogleIcon />}
-      {...props}
-    >
-      Đăng nhập bằng Google
-    </Button>
-  );
-}
 
 const Container = styled(Box)({
   width: "100vw",
   height: "100vh",
 })
 
-const Background = styled(Box)({
-  position: "fixed",
-  zIndex: -1,
-  width: "100vw",
-  height: "100vh",
-  backgroundImage: `url("https://scontent.fhan3-5.fna.fbcdn.net/v/t39.30808-6/359835501_294613576291168_233522295257806940_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=efb6e6&_nc_eui2=AeE1DkBdw1_3rDW2tYI9J1luzsBErn-cABTOwESuf5wAFJ4Edw_429MErl05851zmdp2AdWR0qmAZTOr6kGLQ052&_nc_ohc=urjRrVnb-bIAX9d9YAS&_nc_oc=AQnIXT7ghOXyw5t0T_JtyqbFkZjdDPCVxAYsh5pC4m6jHM_g3Dy8GukcXnoNBWZCmXE&_nc_ht=scontent.fhan3-5.fna&oh=00_AfBAJ7TjHiXgyLKmFTpLmFfmU5BkG3LAGpG9jDzKG_qF2A&oe=65DF1F6F")`,
-  backgroundSize: "contain",
-  backgroundRepeat: "no-repeat",
-  backgroundPosition: "center",
-  opacity: 0.2
-})
+
+const columns = [
+  {
+    field: 'tx_id', headerName: 'ID', minWidth: 100,
+    width: 100,
+    flex: 1,
+  },
+  {
+    field: 'date', headerName: 'Ngày', minWidth: 100,
+    width: 100,
+    flex: 1,
+  },
+  {
+    field: 'amount', headerName: 'Số tiền', type: 'number', minWidth: 100,
+    width: 100,
+    flex: 1,
+  },
+  // {
+  //   field: 'sender',
+  //   headerName: 'Người gửi',
+  //   width: 200,
+  // },
+  {
+    field: 'raw_message',
+    headerName: 'Nội dung',
+    minWidth: 300,
+    width: 300,
+    flex: 6,
+  },
+];
+
+
+
+const fetchData = async (filter) => {
+  // const res = await fetch(`${backendURL}/?searchStr=${filter}`)
+  const res = await fetch(`${backendURL}/?searchStr=viet nam`)
+  const json = await res.json()
+  const data = json.data ? json.data : []
+  const formattedData = data.map(d => ({
+    ...d,
+    date: moment(d.Date).format('DD/MM/YYYY'),
+  }))
+  return formattedData
+};
 
 const Homepage = () => {
-  const handleAuthClick = () => {
-    window.tokenClient.callback = async (resp) => {
-      if (resp.error !== undefined) {
-        throw (resp);
-      }
-      localStorage.setItem("token", JSON.stringify(gapi.client.getToken()))
-      window.location = "/input"
-    };
+  const [searchString, setSearchString] = useState('')
+  const [rows, setRows] = useState([])
 
-    if (gapi.client.getToken() === null) {
-      // Prompt the user to select a Google Account and ask for consent to share their data
-      // when establishing a new session.
-      window.tokenClient.requestAccessToken({ prompt: 'consent' });
-    } else {
-      // Skip display of account chooser and consent dialog for an existing session.
-      window.tokenClient.requestAccessToken({ prompt: '' });
-    }
-  }
+  let [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
-    // get devices
+    console.log(searchParams)
+    console.log("filter", searchParams.get("filter"))
+    console.log("sort", searchParams.get("sort"))
+  }, [searchParams])
+
+  useEffect(() => {
     (async () => {
-      await navigator.mediaDevices.getUserMedia({ video: true });
-      await loadDeviceId()
-    })()
-  }, [])
+      const data = await fetchData(searchString)
+      setRows(data)
+    }
+    )()
+  }, [searchString])
+
+  const [filterModel, setFilterModel] = React.useState({
+    items: [
+      // {
+      //   field: 'amount',
+      //   operator: '>',
+      //   value: 100000,
+      // },
+    ],
+    quickFilterValues: []
+  });
+
+  const handleFilterChange = (filterModel) => {
+    setSearchParams(params => {
+      params.set("filter", JSON.stringify(filterModel))
+      return params
+    })
+    setFilterModel(filterModel);
+  };
+
+  const [sortModel, setSortModel] = React.useState([
+    {
+      field: 'date',
+      sort: 'asc',
+    },
+  ]);
+
+  const handleSortChange = (sortModel) => {
+    setSearchParams(params => {
+      params.set("sort", JSON.stringify(sortModel))
+      return params
+    })
+    setSortModel(sortModel);
+  };
+
+  const [paginationModel, setPaginationModel] = React.useState({
+    pageSize: 50,
+    page: 0,
+  })
+
+  const handlePaginationChange = (paginationModel) => {
+    setSearchParams(params => {
+      params.set("pagination", JSON.stringify(paginationModel))
+      return params
+    })
+    setPaginationModel(paginationModel);
+  };
+
+  useEffect(() => {
+    (async () => {
+      const data = await fetchData(filterModel, sortModel, paginationModel)
+      setRows(data)
+    }
+    )()
+  }, [filterModel, sortModel, paginationModel])
+
 
   return (
-    <Container sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', flexDirection: "column" }}>
-      <Background />
-      <Typography variant="h6" sx={{ color: "brown", marginTop: 10 }}>
-        Chiến dịch Mùa Chay 2024
-      </Typography>
-      <Typography variant="h5" sx={{ m: 1, color: "purple" }}>
-        HOÁN ĐỔI VÀ CANH TÂN
-      </Typography>
-      <LoginButton sx={{ m: 2 }} onClick={handleAuthClick} />
-    </Container>
+    <Layout>
+      <Container sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', flexDirection: "column", width: '100%' }}>
+        <Paper sx={{ height: '80%', width: '100%' }}>
+          {/* <AutocompleteSearch onChange={setSearchString} /> */}
+          <DataGrid
+            initialState={{
+              filter: {
+                filterModel: JSON.parse(searchParams.get("filter")),
+              },
+              sort: {
+                paginationModel: JSON.parse(searchParams.get("sort")),
+              },
+              pagination: { page: 0, pageSize: 50 }
+            }}
+            rows={rows}
+            columns={columns}
+            pageSizeOptions={[50, 100, 200]}
+            checkboxSelection
+            sx={{ border: 0 }}
+            getRowHeight={() => "auto"}
+            slots={{ toolbar: GridToolbar }}
+            slotProps={{
+              toolbar: {
+                showQuickFilter: true,
+                quickFilterProps: {
+                  placeholder: 'Tìm kiếm',
+                  sx: {
+                    width: 500
+                  },
+                }
+              },
+            }}
+            filterModel={filterModel}
+            onFilterModelChange={handleFilterChange}
+            sortModel={sortModel}
+            onSortModelChange={handleSortChange}
+            paginationModel={paginationModel}
+            onPaginationModelChange={handlePaginationChange}
+          />
+        </Paper>
+      </Container>
+    </Layout>
+
   )
 }
 

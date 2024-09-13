@@ -5,10 +5,8 @@ import {
   RouterProvider,
 } from "react-router-dom";
 import './index.css';
-import GenerateQR from './GenerateQR'
-import Input from './Input'
-import OldInput from './OldInput'
 import Homepage from './Homepage'
+import Statistic from './Statistic'
 import reportWebVitals from './reportWebVitals';
 
 const router = createBrowserRouter([
@@ -17,16 +15,8 @@ const router = createBrowserRouter([
     element: <Homepage />,
   },
   {
-    path: "/input",
-    element: <Input />,
-  },
-  {
-    path: "/abc",
-    element: <OldInput />,
-  },
-  {
-    path: "/qr",
-    element: <GenerateQR />,
+    path: "/statistic",
+    element: <Statistic />,
   }
 ]);
 
