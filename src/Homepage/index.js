@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Box from '@mui/material/Box'
 import { styled } from '@mui/material/styles';
-import { DataGrid, GridToolbar } from '@mui/x-data-grid';
+import { DataGrid, GridToolbar, getGridNumericOperators, getGridDateOperators } from '@mui/x-data-grid';
 import Paper from '@mui/material/Paper';
 import Layout from '../components/Layout';
 import moment from 'moment'
@@ -25,11 +25,17 @@ const columns = [
     field: 'date', headerName: 'Ngày', minWidth: 100,
     width: 100,
     flex: 1,
+    filterOperators: getGridDateOperators().filter(
+      (operator) => operator.value === 'is' || operator.value === 'onOrAfter' || operator.value === 'onOrBefore',
+    )
   },
   {
     field: 'amount', headerName: 'Số tiền', type: 'number', minWidth: 100,
     width: 100,
     flex: 1,
+    filterOperators: getGridNumericOperators().filter(
+      (operator) => operator.value === '=' || operator.value === '>=' || operator.value === '<=',
+    )
   },
   // {
   //   field: 'sender',
@@ -42,42 +48,78 @@ const columns = [
     minWidth: 300,
     width: 300,
     flex: 6,
+    filterable: false,
   },
 ];
 
 
 
-const fetchData = async (filter) => {
-  // const res = await fetch(`${backendURL}/?searchStr=${filter}`)
-  const res = await fetch(`${backendURL}/?searchStr=viet nam`)
-  const json = await res.json()
-  const data = json.data ? json.data : []
-  const formattedData = data.map(d => ({
-    ...d,
-    date: moment(d.Date).format('DD/MM/YYYY'),
-  }))
-  return formattedData
+const fetchData = async (filterModel, sortModel, paginationModel) => {
+  try {
+    let searchUrl = `${backendURL}/?`
+    if (filterModel) {
+      if (filterModel.quickFilterValues) {
+        searchUrl += `&searchStr=${filterModel.quickFilterValues.join(' ')}`
+      }
+      filterModel.items.forEach((item, index) => {
+        if (item.field === 'amount') {
+          if (item.operator === '=') {
+            searchUrl += `&minAmount=${item.value}&maxAmount=${item.value}`
+          } else if (item.operator === '>=') {
+            searchUrl += `&minAmount=${item.value}`
+          } else if (item.operator === '<=') {
+            searchUrl += `&maxAmount=${item.value}`
+          }
+        }
+
+        if (item.field === 'date') {
+          if (item.operator === '=') {
+            searchUrl += `&minDate=${item.value}&maxDate=${item.value}`
+          } else if (item.operator === '>') {
+            searchUrl += `&minDate=${item.value}`
+          } else if (item.operator === '<') {
+            searchUrl += `&maxDate=${item.value}`
+          }
+        }
+      })
+    }
+
+    if (sortModel) {
+      sortModel.forEach((item, index) => {
+        if (item.field === 'date') {
+          searchUrl += `&sortDate=${item.sort === 'asc' ? 1 : -1}`
+        }
+
+        if (item.field === 'amount') {
+          searchUrl += `&sortAmount=${item.sort === 'asc' ? 1 : -1}`
+        }
+      })
+    }
+
+    if (paginationModel) {
+      searchUrl += `&offset=${paginationModel.page * paginationModel.pageSize}&limit=${paginationModel.pageSize}`
+    }
+
+
+    const res = await fetch(searchUrl)
+    const json = await res.json()
+    const data = json.data ? json.data : []
+    const formattedData = data.map(d => ({
+      ...d,
+      date: moment(d.Date).format('DD/MM/YYYY'),
+    }))
+    return formattedData
+  } catch (error) {
+    return []
+  }
 };
 
 const Homepage = () => {
-  const [searchString, setSearchString] = useState('')
   const [rows, setRows] = useState([])
 
   let [searchParams, setSearchParams] = useSearchParams();
 
-  useEffect(() => {
-    console.log(searchParams)
-    console.log("filter", searchParams.get("filter"))
-    console.log("sort", searchParams.get("sort"))
-  }, [searchParams])
 
-  useEffect(() => {
-    (async () => {
-      const data = await fetchData(searchString)
-      setRows(data)
-    }
-    )()
-  }, [searchString])
 
   const [filterModel, setFilterModel] = React.useState({
     items: [
@@ -152,7 +194,7 @@ const Homepage = () => {
             }}
             rows={rows}
             columns={columns}
-            pageSizeOptions={[50, 100, 200]}
+            pageSizeOptions={[25, 50, 100]}
             checkboxSelection
             sx={{ border: 0 }}
             getRowHeight={() => "auto"}
@@ -174,6 +216,7 @@ const Homepage = () => {
             onSortModelChange={handleSortChange}
             paginationModel={paginationModel}
             onPaginationModelChange={handlePaginationChange}
+            disableColumnSelector
           />
         </Paper>
       </Container>
