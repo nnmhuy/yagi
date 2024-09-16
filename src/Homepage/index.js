@@ -101,7 +101,12 @@ const fetchData = async (filterModel, sortModel, paginationModel) => {
     }
 
 
-    const res = await fetch(searchUrl)
+    const res = await fetch(searchUrl, {
+      mode: 'no-cors',
+      headers: {
+        'Access-Control-Allow-Origin': '*'
+      }
+    })
     const json = await res.json()
     const data = json.data ? json.data : []
     const formattedData = data.map(d => ({
